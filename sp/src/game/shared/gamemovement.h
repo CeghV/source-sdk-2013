@@ -80,6 +80,8 @@ protected:
 	// Does most of the player movement logic.
 	// Returns with origin, angles, and velocity modified in place.
 	// were contacted during the move.
+	void Dash(CBasePlayer* player);
+
 	virtual void	PlayerMove(	void );
 
 	// Set ground data, etc.

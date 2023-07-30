@@ -79,9 +79,9 @@ extern int gEvilImpulse101;
 
 ConVar sv_autojump( "sv_autojump", "0" );
 
-ConVar hl2_walkspeed( "hl2_walkspeed", "150" );
-ConVar hl2_normspeed( "hl2_normspeed", "190" );
-ConVar hl2_sprintspeed( "hl2_sprintspeed", "320" );
+ConVar hl2_walkspeed( "hl2_walkspeed", "450" ); // 150
+ConVar hl2_normspeed( "hl2_normspeed", "570" ); // 190
+ConVar hl2_sprintspeed( "hl2_sprintspeed", "960" ); // 320
 
 ConVar hl2_darkness_flashlight_factor ( "hl2_darkness_flashlight_factor", "1" );
 
@@ -2295,10 +2295,11 @@ int	CHL2_Player::OnTakeDamage( const CTakeDamageInfo &info )
 	{
 		// usually, we will reset the input flag after the first impact. However there is another input that
 		// prevents this behavior.
-		if ( m_bIgnoreFallDamageResetAfterImpact )
-		{
-			m_flTimeIgnoreFallDamage = 0;
-		}
+		//if ( m_bIgnoreFallDamageResetAfterImpact )
+		//{
+		//	m_flTimeIgnoreFallDamage = 0;
+		//}
+		// lmao i disabled fall damage
 		return 0;
 	}
 

@@ -1,7 +1,8 @@
 "GameInfo"
 {
-	game 		"My First HL2 Mod"
-	title 		"HALF-LIFE'"
+	gamelogo 	1
+	game 		"PΘWΣRPLΛY"
+	title 		""
 	title2		""
 	supportsvr	1
 

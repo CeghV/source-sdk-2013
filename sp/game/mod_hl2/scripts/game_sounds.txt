@@ -1,0 +1,36 @@
+suit.sprint
+{
+    channel    CHAN_AUTO
+    volume     VOL_NORM
+    pitch      PITCH_NORM
+    soundlevel SNDLVL_NORM
+    wave       player/suit_sprint.wav
+}
+suit.deny
+{
+    channel    CHAN_AUTO
+    volume     VOL_NORM
+    pitch      PITCH_NORM
+    soundlevel SNDLVL_NORM
+    wave       player/suit_denydevice.wav
+}
+grapple.impact
+{
+    channel    CHAN_AUTO
+    volume     VOL_NORM
+    pitch      PITCH_NORM
+    soundlevel SNDLVL_NORM
+	rndwave
+	{
+		wave	physics/metal/sawblade_stick1.wav
+		wave	physics/metal/sawblade_stick2.wav
+		wave	physics/metal/sawblade_stick3.wav
+	}
+}
+grapple.release	{
+    channel    CHAN_AUTO
+    volume     VOL_NORM
+    pitch      PITCH_NORM
+    soundlevel SNDLVL_NORM
+    wave       doors/vent_open1.wav
+}

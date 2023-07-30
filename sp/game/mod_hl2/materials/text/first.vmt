@@ -1,0 +1,8 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "text/first"
+	"$surfaceprop" "Concrete"
+	"$alphatest" 1
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

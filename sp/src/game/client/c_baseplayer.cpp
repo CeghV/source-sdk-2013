@@ -11,6 +11,7 @@
 #include "weapon_selection.h"
 #include "history_resource.h"
 #include "iinput.h"
+#include "in_main.h"
 #include "input.h"
 #include "view.h"
 #include "iviewrender.h"
@@ -1364,9 +1365,22 @@ void C_BasePlayer::CreateWaterEffects( void )
 
 //-----------------------------------------------------------------------------
 // Called when not in tactical mode. Allows view to be overriden for things like driving a tank.
+// false, i use this for calculating dynamic FOV
 //-----------------------------------------------------------------------------
-void C_BasePlayer::OverrideView( CViewSetup *pSetup )
-{
+void C_BasePlayer::OverrideView( CViewSetup *pSetup )	{
+	float speed = GetAbsVelocity().Length2D();
+	float minSpeed = 100.0f;
+	float maxSpeed = 1220.0f;
+	float minFOV = 90.0f;
+	float maxFOV = 150.0f; // 120.0f
+	float fovRange = maxFOV - minFOV;
+	float speedRange = maxSpeed - minSpeed;
+	float mappedFOV = minFOV + (fovRange * (speed - minSpeed) / speedRange);
+	mappedFOV = clamp(mappedFOV, minFOV, maxFOV);
+	static float currentFOV = minFOV;
+	float interpolationSpeed = 5.0f;
+	currentFOV = Lerp(interpolationSpeed * gpGlobals->frametime, currentFOV, mappedFOV);
+	pSetup->fov = currentFOV;
 }
 
 bool C_BasePlayer::ShouldInterpolate()

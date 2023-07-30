@@ -23,7 +23,6 @@
 #include "game_item_schema.h"
 #include "econ_item_view.h"
 #endif
-
 // For queuing and processing usercmds
 class CCommandContext
 {
@@ -177,7 +176,6 @@ enum PlayerConnectedState
 
 extern bool gInitHUD;
 extern ConVar *sv_cheats;
-
 class CBasePlayer;
 class CPlayerInfo : public IBotController, public IPlayerInfo
 {
@@ -623,6 +621,7 @@ public:
 
 public:
 	// Player Physics Shadow
+
 	void					SetupVPhysicsShadow( const Vector &vecAbsOrigin, const Vector &vecAbsVelocity, CPhysCollide *pStandModel, const char *pStandHullName, CPhysCollide *pCrouchModel, const char *pCrouchHullName );
 	IPhysicsPlayerController* GetPhysicsController() { return m_pPhysicsController; }
 	virtual void			VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );

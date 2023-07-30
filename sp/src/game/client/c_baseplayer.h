@@ -84,6 +84,8 @@ public:
 	virtual bool	GetSteamID( CSteamID *pID );
 
 	// IClientEntity overrides.
+
+
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 

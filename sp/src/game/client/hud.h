@@ -16,6 +16,8 @@
 #include <vgui/VGUI.h>
 #include <Color.h>
 #include <bitbuf.h>
+#include "CustomVGUI_DashBar.h"
+#include "c_baseplayer.h"
 
 namespace vgui
 {
@@ -191,9 +193,7 @@ private:
 
 	float						m_flScreenShotTime; // used to take end-game screenshots
 };
-
 extern CHud gHUD;
-
 //-----------------------------------------------------------------------------
 // Global fonts used in the client DLL
 //-----------------------------------------------------------------------------
@@ -202,5 +202,4 @@ extern vgui::HFont g_hFontTrebuchet24;
 void LoadHudTextures( CUtlDict< CHudTexture *, int >& list, const char *szFilenameWithoutExtension, const unsigned char *pICEKey );
 
 void GetHudSize( int& w, int &h );
-
 #endif // HUD_H

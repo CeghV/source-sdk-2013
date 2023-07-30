@@ -12,6 +12,7 @@
 #include "kbutton.h"
 #include "usercmd.h"
 #include "in_buttons.h"
+#include "in_main.h"
 #include "input.h"
 #include "iviewrender.h"
 #include "iclientmode.h"
@@ -454,11 +455,11 @@ void IN_BackUp( const CCommand &args ) {KeyUp(&in_back, args[1] );}
 void IN_LookupDown( const CCommand &args ) {KeyDown(&in_lookup, args[1] );}
 void IN_LookupUp( const CCommand &args ) {KeyUp(&in_lookup, args[1] );}
 void IN_LookdownDown( const CCommand &args ) {KeyDown(&in_lookdown, args[1] );}
-void IN_LookdownUp( const CCommand &args ) {KeyUp(&in_lookdown, args[1] );}
 void IN_MoveleftDown( const CCommand &args ) {KeyDown(&in_moveleft, args[1] );}
 void IN_MoveleftUp( const CCommand &args ) {KeyUp(&in_moveleft, args[1] );}
 void IN_MoverightDown( const CCommand &args ) {KeyDown(&in_moveright, args[1] );}
 void IN_MoverightUp( const CCommand &args ) {KeyUp(&in_moveright, args[1] );}
+void IN_LookdownUp( const CCommand &args ) {KeyUp(&in_lookdown, args[1] );}
 void IN_WalkDown( const CCommand &args ) {KeyDown(&in_walk, args[1] );}
 void IN_WalkUp( const CCommand &args ) {KeyUp(&in_walk, args[1] );}
 void IN_SpeedDown( const CCommand &args ) {KeyDown(&in_speed, args[1] );}

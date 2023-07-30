@@ -810,6 +810,10 @@ public:
 	CNetworkVar( float, m_flAnimTime );  // this is the point in time that the client will interpolate to position,angle,frame,etc.
 	CNetworkVar( float, m_flSimulationTime );
 
+	CNetworkVar(float, m_flRemainingCooldown); // for use with dash mechanic
+	CNetworkVar(float, pSpringDist); // distance from player to grapple
+	CNetworkVar(Vector, pSpringEndPos); // distance from player to grapple
+
 	void IncrementInterpolationFrame(); // Call this to cause a discontinuity (teleport)
 
 	CNetworkVar( int, m_ubInterpolationFrame );

@@ -14,7 +14,6 @@
 #include "decals.h"
 #include "coordsize.h"
 #include "rumble_shared.h"
-
 #if defined(HL2_DLL) || defined(HL2_CLIENT_DLL)
 	#include "hl_movedata.h"
 #endif
@@ -2434,7 +2433,7 @@ bool CGameMovement::CheckJumpButton( void )
 	{
 #if defined(HL2_DLL) || defined(HL2_CLIENT_DLL)
 		Assert( GetCurrentGravity() == 600.0f );
-		flMul = 160.0f;	// approx. 21 units.
+		flMul = 320.0f;	// approx. 21 units. also was 160.0f
 #else
 		Assert( GetCurrentGravity() == 800.0f );
 		flMul = 268.3281572999747f;
@@ -4761,7 +4760,6 @@ void CGameMovement::FullTossMove( void )
 	Vector move;
 	
 	CheckWater();
-
 	// add velocity if player is moving 
 	if ( (mv->m_flForwardMove != 0.0f) || (mv->m_flSideMove != 0.0f) || (mv->m_flUpMove != 0.0f))
 	{
@@ -4926,4 +4924,3 @@ void  CGameMovement::TryTouchGround( const Vector& start, const Vector& end, con
 	ray.Init( start, end, mins, maxs );
 	UTIL_TraceRay( ray, fMask, mv->m_nPlayerHandle.Get(), collisionGroup, &pm );
 }
-

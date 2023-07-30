@@ -3,14 +3,19 @@
 // Purpose: Functions dealing with the player.
 //
 //===========================================================================//
-
 #include "cbase.h"
+#include "globals.h"
 #include "const.h"
+#include "rope.h"
+#include "rope_helpers.h"
+#include <KeyValues.h>
 #include "baseplayer_shared.h"
 #include "trains.h"
 #include "soundent.h"
 #include "gib.h"
 #include "shake.h"
+#include "recipientfilter.h"
+#include "igamesystem.h"
 #include "decals.h"
 #include "gamerules.h"
 #include "game.h"
@@ -30,6 +35,7 @@
 #include "ndebugoverlay.h"
 #include "baseviewmodel.h"
 #include "in_buttons.h"
+#include "interface.h"
 #include "client.h"
 #include "team.h"
 #include "particle_smokegrenade.h"
@@ -53,6 +59,7 @@
 #include "KeyValues.h"
 #include "coordsize.h"
 #include "vphysics/player_controller.h"
+#include "engine/ienginesound.h"
 #include "saverestore_utlvector.h"
 #include "hltvdirector.h"
 #include "nav_mesh.h"
@@ -69,6 +76,9 @@
 #include "dt_utlvector_send.h"
 #include "vote_controller.h"
 #include "ai_speech.h"
+#include "convar.h"
+#include <map>
+#include <ctime>
 
 #if defined USES_ECON_ITEMS
 #include "econ_wearable.h"
@@ -76,7 +86,6 @@
 
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
-
 #ifdef HL2_DLL
 #include "combine_mine.h"
 #include "weapon_physcannon.h"
@@ -105,12 +114,16 @@ static ConVar old_armor( "player_old_armor", "0" );
 static ConVar physicsshadowupdate_render( "physicsshadowupdate_render", "0" );
 bool IsInCommentaryMode( void );
 bool IsListeningToCommentary( void );
+float g_dashTime=0.0f;
+bool isGrapple = false;
+CBaseEntity* pEndPosition;
+CRopeKeyframe* pRope;
 
 #if !defined( CSTRIKE_DLL )
-ConVar cl_sidespeed( "cl_sidespeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT );
-ConVar cl_upspeed( "cl_upspeed", "320", FCVAR_REPLICATED | FCVAR_CHEAT );
-ConVar cl_forwardspeed( "cl_forwardspeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT );
-ConVar cl_backspeed( "cl_backspeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar cl_sidespeed( "cl_sidespeed", "900", FCVAR_REPLICATED | FCVAR_CHEAT ); // 450
+ConVar cl_upspeed( "cl_upspeed", "640", FCVAR_REPLICATED | FCVAR_CHEAT ); // 320
+ConVar cl_forwardspeed( "cl_forwardspeed", "900", FCVAR_REPLICATED | FCVAR_CHEAT ); // 450 default value :3
+ConVar cl_backspeed( "cl_backspeed", "900", FCVAR_REPLICATED | FCVAR_CHEAT ); // 450
 #endif // CSTRIKE_DLL
 
 // This is declared in the engine, too
@@ -605,7 +618,7 @@ CBasePlayer::CBasePlayer( )
 
 	m_surfaceProps = 0;
 	m_pSurfaceData = NULL;
-	m_surfaceFriction = 1.0f;
+	m_surfaceFriction = 0.0f; // 1.0f
 	m_chTextureType = 0;
 	m_chPreviousTextureType = 0;
 
@@ -635,6 +648,10 @@ CBasePlayer::CBasePlayer( )
 
 	m_flLastUserCommandTime = 0.f;
 	m_flMovementTimeForUserCmdProcessingRemaining = 0.0f;
+
+	m_flRemainingCooldown = 0.0f;
+	pSpringDist = -1.0f;
+	pSpringEndPos = 0;
 }
 
 CBasePlayer::~CBasePlayer( )
@@ -3182,6 +3199,15 @@ void CBasePlayer::RunNullCommand( void )
 //-----------------------------------------------------------------------------
 void CBasePlayer::PhysicsSimulate( void )
 {
+	if (IsAlive())	{
+		if (gpGlobals->frametime == 0.0f){ SetAbsVelocity(Vector(0,0,0)); }
+		else{
+			if (isGrapple)	{
+				SetAbsVelocity((GetAbsVelocity()-((GetAbsOrigin()-pRope->GetEndPoint()->GetAbsOrigin())/15)));
+			}
+		}
+	}
+
 	VPROF_BUDGET( "CBasePlayer::PhysicsSimulate", VPROF_BUDGETGROUP_PLAYER );
 
 	// If we've got a moveparent, we must simulate that first.
@@ -6045,6 +6071,97 @@ void CC_CH_CreateJeep( void )
 
 static ConCommand ch_createjeep("ch_createjeep", CC_CH_CreateJeep, "Spawn jeep in front of the player.", FCVAR_CHEAT);
 
+static void grapple(CBasePlayer *pPlayer)	{
+	CRecipientFilter crfilter;
+	crfilter.AddRecipient(pPlayer);
+	if (isGrapple==false)	{
+		Vector eyePosition, forwardVector;
+		pPlayer->EyePositionAndVectors(&eyePosition, &forwardVector, nullptr, nullptr);
+		trace_t trace;
+		UTIL_TraceLine(eyePosition, eyePosition + forwardVector * 1000, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &trace);
+		if (trace.fraction == 1.0f)	{
+			CBaseEntity::PrecacheScriptSound("suit.deny");
+			pPlayer->EmitSound(crfilter, pPlayer->entindex(), "suit.deny");
+		}
+		else
+		{
+			Vector endPos = trace.endpos;
+			pEndPosition = CreateEntityByName("prop_physics");
+			if (pEndPosition) {
+				pEndPosition->SetModel("models/props_c17/oildrum001.mdl");
+				pEndPosition->SetAbsOrigin(endPos);
+				pPlayer->pSpringEndPos = endPos;
+				DispatchSpawn(pEndPosition);
+				pEndPosition->Activate();
+				pEndPosition->SetMoveType(MOVETYPE_NONE);
+				pEndPosition->SetSolid(SOLID_NONE);
+				pEndPosition->SetRenderMode(kRenderNone);
+				pEndPosition->SetGravity(0.0f);
+				CBaseEntity::PrecacheScriptSound("grapple.impact");
+				pEndPosition->EmitSound(crfilter, pEndPosition->entindex(), "grapple.impact");
+			}
+			pRope = CRopeKeyframe::Create(static_cast<CBaseEntity*>(pPlayer), static_cast<CBaseEntity*>(CreateEntityByName("info_target")));
+			pRope->SetEndPoint(pEndPosition);
+			pRope->Activate();
+			pPlayer->pSpringDist = pRope->m_RopeLength;
+			isGrapple = true;
+		}
+	}
+	else
+	{
+		CBaseEntity::PrecacheScriptSound("grapple.release");
+		pEndPosition->EmitSound(crfilter, pEndPosition->entindex(), "grapple.release");
+		UTIL_Remove(pEndPosition);
+		UTIL_Remove(pRope);
+		isGrapple = false;
+		pPlayer->pSpringDist = -1.0f;
+		pPlayer->pSpringEndPos = 0;
+	}
+}
+
+void cc_grapple(void)	{
+	CBasePlayer *pPlayer = UTIL_GetCommandClient();
+	if (!pPlayer)
+		return;
+	grapple(pPlayer);
+}
+
+static ConCommand ch_grapple("grapple", cc_grapple, "Send grapple in direction that the player is facing.", FCVAR_NONE);
+
+static void dash(CBasePlayer *pPlayer)	{
+	const float cooldownDuration = 2.0f;
+	CRecipientFilter crfilter;
+	crfilter.AddRecipient(pPlayer);
+	if (pPlayer->IsAlive())	{
+		float currentTime = gpGlobals->curtime;
+		if ((currentTime - pPlayer->m_flRemainingCooldown)<0.0f || (currentTime - pPlayer->m_flRemainingCooldown)>2.0f)	{
+			pPlayer->m_flRemainingCooldown = 0.0f;
+		}
+		if (currentTime - pPlayer->m_flRemainingCooldown >= cooldownDuration)	{
+			Vector forwardVector;
+			AngleVectors(pPlayer->EyeAngles(), &forwardVector);
+			forwardVector.NormalizeInPlace();
+			pPlayer->SetAbsVelocity(forwardVector * 1000);
+			CBaseEntity::PrecacheScriptSound("suit.sprint");
+			pPlayer->EmitSound(crfilter, pPlayer->entindex(), "suit.sprint");
+			pPlayer->m_flRemainingCooldown = currentTime;
+		}
+		else
+		{
+			CBaseEntity::PrecacheScriptSound("suit.deny");
+			pPlayer->EmitSound(crfilter, pPlayer->entindex(), "suit.deny");
+		}
+	}
+}
+
+void cc_dash(void)	{
+	CBasePlayer *pPlayer = UTIL_GetCommandClient();
+	if (!pPlayer)
+		return;
+	dash(pPlayer);
+}
+
+static ConCommand ch_dash("dash", cc_dash, "Dash 320 hammer units forward.", FCVAR_NONE);
 
 //-----------------------------------------------------------------------------
 // Create an airboat in front of the specified player
@@ -6070,9 +6187,8 @@ static void CreateAirboat( CBasePlayer *pPlayer )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: lol valve dev forgot to fill this comment
 //-----------------------------------------------------------------------------
 void CC_CH_CreateAirboat( void )
 {
@@ -8424,7 +8540,6 @@ int CBasePlayer::GetFOV( void )
 	{
 		fFOV = SimpleSplineRemapValClamped( deltaTime, 0.0f, 1.0f, m_iFOVStart, fFOV );
 	}
-
 	return fFOV;
 }
 
@@ -9332,8 +9447,6 @@ void CBasePlayer::AdjustDrownDmg( int nAmount )
 		m_idrowndmg = m_idrownrestored;
 	}
 }
-
-
 
 #if !defined(NO_STEAM)
 //-----------------------------------------------------------------------------
